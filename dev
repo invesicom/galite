@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+DEFAULT_PORT=8787
+PORT=""
+ARGS=()
+
+EXPECTED_NUXT_VERSION="$(node -p "require('./package.json').dependencies.nuxt")"
+INSTALLED_NUXT_VERSION="$(node -p "require('./node_modules/nuxt/package.json').version" 2>/dev/null || true)"
+
+if [ "$INSTALLED_NUXT_VERSION" != "$EXPECTED_NUXT_VERSION" ]; then
+  echo "Dependencies are stale: expected Nuxt $EXPECTED_NUXT_VERSION, found ${INSTALLED_NUXT_VERSION:-none}." >&2
+  echo "Run 'corepack pnpm install' before starting the development server." >&2
+  exit 1
+fi
+
+while (($#)); do
+  case "$1" in
+    --port)
+      if (($# < 2)); then
+        echo "Missing value for --port" >&2
+        exit 1
+      fi
+      PORT="$2"
+      ARGS+=("$1" "$2")
+      shift 2
+      ;;
+    --port=*)
+      PORT="${1#*=}"
+      ARGS+=("$1")
+      shift
+      ;;
+    -p)
+      if (($# < 2)); then
+        echo "Missing value for -p" >&2
+        exit 1
+      fi
+      PORT="$2"
+      ARGS+=("$1" "$2")
+      shift 2
+      ;;
+    -p*)
+      PORT="${1#-p}"
+      ARGS+=("$1")
+      shift
+      ;;
+    *)
+      ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [ -z "$PORT" ]; then
+  PORT="$DEFAULT_PORT"
+  if ((${#ARGS[@]})); then
+    ARGS=(--port "$PORT" "${ARGS[@]}")
+  else
+    ARGS=(--port "$PORT")
+  fi
+fi
+
+if command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "Port $PORT is already in use. Stop the existing process or choose another port." >&2
+  lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >&2
+  exit 1
+fi
+
+exec pnpm exec nuxt dev "${ARGS[@]}"

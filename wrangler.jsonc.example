@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "open-galite",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".output/public"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "open-galite",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "APP_ENV": "production",
+    "SITE_NAME": "GA Lite",
+    "SITE_DESCRIPTION": "Private analytics for your sites",
+    "DEFAULT_LOCALE": "en"
+  },
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1
+  },
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  }
+}

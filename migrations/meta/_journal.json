@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1785588811034,
+      "tag": "0000_majestic_power_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1785642477056,
+      "tag": "0001_luxuriant_wiccan",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785674928162,
+      "tag": "0002_silly_captain_midlands",
+      "breakpoints": true
+    }
+  ]
+}
