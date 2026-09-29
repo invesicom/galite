@@ -91,6 +91,7 @@ export default defineEventHandler(async (event) => {
     } catch (err) {
       if (err?.statusCode === 401) return reqFail('invalid_api_key')
       console.error('[bing-api-key] validate failed:', bingValidationDiagnostic(err, apiKey))
+      if (err?.statusCode === 503) return reqFail('bing_rate_limited')
       return reqFail('bing_api_error')
     }
 

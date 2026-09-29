@@ -455,7 +455,10 @@ async function editBingConfig(auth) {
       editingBingAuth.value = { ...auth, ...(res.data || {}) }
       bingApiKeyVisible.value = true
     } else {
-      showToast(res?.msg || t('integrations.connect_error'), { type: 'error' })
+      const message = res?.msg === 'bing_rate_limited'
+        ? 'Bing is temporarily limiting requests from GA Lite. Please wait a few minutes and try again.'
+        : res?.msg || t('integrations.connect_error')
+      showToast(message, { type: 'error' })
     }
   } catch (err) {
     showToast(err?.message || t('integrations.connect_error'), { type: 'error' })

@@ -76,7 +76,7 @@ async function bingGet(method, { apiKey, params = {} }) {
     if (res.status === 401 || /InvalidApiKey|AccessDenied|Unauthorized/i.test(message)) {
       throw createError({ statusCode: 401, message: 'token_invalid', data: message })
     }
-    if (res.status === 429 || /quota|rate/i.test(message)) {
+    if (res.status === 429 || /quota|rate|throttl/i.test(message)) {
       throw createError({ statusCode: 503, message: 'bing_rate_limited', data: message })
     }
     throw createError({ statusCode: res.status || 502, message: 'bing_api_error', data: message })
