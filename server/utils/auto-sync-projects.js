@@ -474,20 +474,22 @@ function gscProjectRow(user, projectKey, site, now) {
  *   affected_project_keys: Array<string>
  * }>}
  */
-export async function syncSitesAsLinks({ db, event, authRow, user }) {
-  let sites = []
-  try {
-    sites = await fetchSites(db, authRow, event)
-  } catch (e) {
-    console.error('[auto-sync gsc] listSites failed:', e?.message)
-    return {
-      complete: false,
-      created: 0,
-      updated: 0,
-      removed: 0,
-      skipped: 0,
-      properties: [],
-      affected_project_keys: [],
+export async function syncSitesAsLinks({ db, event, authRow, user, prefetchedSites }) {
+  let sites = Array.isArray(prefetchedSites) ? prefetchedSites : []
+  if (!Array.isArray(prefetchedSites)) {
+    try {
+      sites = await fetchSites(db, authRow, event)
+    } catch (e) {
+      console.error(`[auto-sync ${authRow.provider}] listSites failed:`, e?.message)
+      return {
+        complete: false,
+        created: 0,
+        updated: 0,
+        removed: 0,
+        skipped: 0,
+        properties: [],
+        affected_project_keys: [],
+      }
     }
   }
   if (!Array.isArray(sites)) {
@@ -586,12 +588,15 @@ export async function syncSitesAsLinks({ db, event, authRow, user }) {
  *    gsc / bing → syncSitesAsLinks  (按 domain 关联或创建项目)
  *    当前只接受注册表中的 ga4 / gsc / bing
  * =================================================================== */
-export async function syncResourcesFromAuth({ db, event, authRow, user, overwriteExisting = false }) {
+export async function syncResourcesFromAuth({ db, event, authRow, user, overwriteExisting = false, prefetchedProperties }) {
   if (!authRow?.provider) throw createError({ statusCode: 400, message: 'provider required' })
   if (authRow.provider === 'ga4') {
     return syncPropertiesAsProjects({ db, event, authRow, user, overwriteExisting })
   }
-  if (authRow.provider === 'gsc' || authRow.provider === 'bing') {
+  if (authRow.provider === 'bing') {
+    return syncSitesAsLinks({ db, event, authRow, user, prefetchedSites: prefetchedProperties })
+  }
+  if (authRow.provider === 'gsc') {
     return syncSitesAsLinks({ db, event, authRow, user })
   }
   throw createError({ statusCode: 400, message: `unknown provider: ${authRow.provider}` })

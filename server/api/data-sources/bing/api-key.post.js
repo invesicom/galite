@@ -191,7 +191,9 @@ export default defineEventHandler(async (event) => {
     affected_project_keys: [],
   }
   if (apiKey && authRow) {
-    synced = await syncResourcesFromAuth({ db, event, authRow, user })
+    // Key validation already fetched the full site snapshot. Reuse it for
+    // initial sync so setup only consumes one Bing API request.
+    synced = await syncResourcesFromAuth({ db, event, authRow, user, prefetchedProperties: properties })
       .catch((err) => {
         console.error('[bing-api-key] auto-sync failed:', err?.message || err)
         return {
