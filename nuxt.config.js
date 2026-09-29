@@ -144,7 +144,7 @@ export default defineNuxtConfig({
       { code: 'uz', name: 'Oʻzbekcha', file: 'uz.json' },
     ],
     defaultLocale: process.env.DEFAULT_LOCALE || wranglerVars.DEFAULT_LOCALE || 'en',
-    lazy: false,
+    lazy: true,
     langDir: '../i18n/locales',
     strategy: 'prefix_except_default',
     detectBrowserLanguage: false,

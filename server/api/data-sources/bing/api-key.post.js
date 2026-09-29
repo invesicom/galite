@@ -29,6 +29,18 @@ async function hashPrefix(value) {
     .slice(0, 16)
 }
 
+function bingValidationDiagnostic(err, apiKey) {
+  let upstream = String(err?.data || '')
+    .replace(/apikey=([^&\s"']+)/gi, 'apikey=[redacted]')
+  if (apiKey) upstream = upstream.replaceAll(apiKey, '[redacted]')
+
+  return {
+    statusCode: Number(err?.statusCode) || 0,
+    code: String(err?.message || 'unknown').slice(0, 100),
+    upstream: upstream.slice(0, 200),
+  }
+}
+
 function publicAuth(row) {
   return {
     id: row.id,
@@ -78,7 +90,7 @@ export default defineEventHandler(async (event) => {
       properties = await provider.listProperties({ apiKey })
     } catch (err) {
       if (err?.statusCode === 401) return reqFail('invalid_api_key')
-      console.error('[bing-api-key] validate failed:', err?.message || err)
+      console.error('[bing-api-key] validate failed:', bingValidationDiagnostic(err, apiKey))
       return reqFail('bing_api_error')
     }
 

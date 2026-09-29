@@ -48,10 +48,18 @@ const localePath = useLocalePath()
 const requestURL = useRequestURL()
 const nuxtApp = useNuxtApp()
 const requestEvent = import.meta.server ? useRequestEvent() : null
-const errorMessages = Object.fromEntries(
-  Object.entries(import.meta.glob('../i18n/locales/*.json', { eager: true, import: 'default' }))
-    .map(([path, messages]) => [path.split('/').pop().replace('.json', ''), messages]),
+const errorMessageLoaders = import.meta.glob('../i18n/locales/*.json', { import: 'default' })
+const supportedLocaleCodes = new Set(
+  Object.keys(errorMessageLoaders).map((path) => path.split('/').pop().replace('.json', '')),
 )
+const errorMessages = reactive({})
+
+async function loadErrorMessages(localeCode) {
+  if (!localeCode || errorMessages[localeCode]) return
+
+  const loadMessages = errorMessageLoaders[`../i18n/locales/${localeCode}.json`]
+  if (loadMessages) errorMessages[localeCode] = await loadMessages()
+}
 
 function detectRouteLocale() {
   let dataPath = ''
@@ -75,24 +83,25 @@ function detectRouteLocale() {
   )
   const pathname = new URL(raw, requestURL.origin).pathname
   const first = pathname.split('/').filter(Boolean)[0]?.toLowerCase()
-  return first && errorMessages[first] ? first : ''
+  return first && supportedLocaleCodes.has(first) ? first : ''
 }
 
+const routeLocale = computed(detectRouteLocale)
 const initialRouteLocale = detectRouteLocale()
 if (initialRouteLocale && locale.value !== initialRouteLocale) {
   await setLocale(initialRouteLocale)
 }
+await loadErrorMessages(initialRouteLocale || locale.value)
+
+watch(routeLocale, async (targetLocale) => {
+  if (!targetLocale) return
+  if (locale.value !== targetLocale) await setLocale(targetLocale)
+  await loadErrorMessages(targetLocale)
+})
 
 /* ---- 文案: i18n 优先, 缺 key 用静态 fallback (错误页要绝对鲁棒) ----
    te(key) 检测翻译是否存在; 不存在时走兜底, 避免显示 raw key 像 "error.404.title" */
 const is404 = computed(() => Number(props.error?.statusCode) === 404)
-const routeLocale = computed(detectRouteLocale)
-
-watchEffect(() => {
-  if (routeLocale.value && locale.value !== routeLocale.value) {
-    locale.value = routeLocale.value
-  }
-})
 
 function readMessage(localeCode, key) {
   const message = errorMessages[localeCode]?.[key]
